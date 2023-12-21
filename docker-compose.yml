@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    restart: always
+    command: sh -c "python manage.py collectstatic --noinput &&
+              python manage.py compilemessages &&
+              python manage.py migrate &&
+              gunicorn backend.wsgi:application --bind 0.0.0.0:8000 --reload"
+    volumes:
+      - static_volume:/home/app/backend/staticfiles
+      - ./backend:/home/app/backend
+    expose:
+      - 8000
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+    links:
+      - db:db
+    networks:
+      - djangonetwork
+  nginx:
+    build: ./nginx
+    restart: always
+    ports:
+      - 80:80
+    volumes:
+      - static_volume:/home/app/backend/staticfiles
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf
+    depends_on:
+      - backend
+    links:
+      - backend:backend
+    networks:
+      - djangonetwork
+  db:
+    image: postgres:16.1-alpine
+    restart: always
+    user: postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+      - ./postgresql/:/docker-entrypoint-initdb.d/
+    env_file:
+      - ./.env
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    networks:
+      - djangonetwork
+
+networks:
+  djangonetwork:
+      driver: bridge
+
+volumes:
+  postgres_data:
+  static_volume:
