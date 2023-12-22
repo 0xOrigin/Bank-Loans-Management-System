@@ -1,6 +1,8 @@
 import uuid
 from django.utils import timezone
 from django.db import models
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
 
 class BankQuerySet(models.QuerySet):
@@ -22,12 +24,12 @@ class BankManager(models.Manager):
 
 
 class BaseAuditModel(models.Model):
-    created_at = models.DateTimeField(verbose_name='Created at')
-    updated_at = models.DateTimeField(null=True, blank=True, verbose_name='Updated at')
-    deleted_at = models.DateTimeField(null=True, blank=True, verbose_name='Deleted at')
-    created_by = models.ForeignKey('users.User', on_delete=models.CASCADE, verbose_name='Created by')
-    updated_by = models.ForeignKey('users.User', on_delete=models.CASCADE, null=True, blank=True, verbose_name='Updated by')
-    deleted_by = models.ForeignKey('users.User', on_delete=models.CASCADE, null=True, blank=True, verbose_name='Deleted by')
+    created_at = models.DateTimeField(verbose_name=_('Created at'))
+    updated_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Updated at'))
+    deleted_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Deleted at'))
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='%(class)s_created_by', verbose_name=_('Created by'))
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='%(class)s_updated_by', verbose_name=_('Updated by'))
+    deleted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='%(class)s_deleted_by', verbose_name=_('Deleted by'))
 
     objects = BankManager()
     all_objects = models.Manager()
