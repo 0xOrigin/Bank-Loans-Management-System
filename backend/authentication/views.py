@@ -4,9 +4,8 @@ from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from core.paginations import BankPagination
 from core.renderers import BankJSONRenderer
-from authentication.apps import AuthenticationConfig
+from core.views import BaseBankViewSet
 from authentication.jwt_auth import set_jwt_cookies, unset_jwt_cookies
 from authentication.serializers import UserSerializer
 from authentication.permissions import AuthenticationPermissions
@@ -14,14 +13,12 @@ from authentication.filters import UserFilter
 from authentication.models import User
 
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+class UserViewSet(BaseBankViewSet):
+    model = User
+    queryset = model.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AuthenticationPermissions]
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = UserFilter
-    pagination_class = BankPagination
-    renderer_classes = [BankJSONRenderer, BrowsableAPIRenderer]
 
     def get_queryset(self):
         return (
