@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'rest_framework', # REST Framework
     'rest_framework_simplejwt', # JWT
     'django_filters', # Django Filters
+    'core.apps.CoreConfig',
     'authentication.apps.AuthenticationConfig',
 ]
 
