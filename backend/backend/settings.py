@@ -207,7 +207,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'authentication.jwt_auth.JWTCookieAuthentication',
     ),
     'NON_FIELD_ERRORS_KEY': 'non-field-errors',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
@@ -247,7 +247,7 @@ CORS_ALLOW_METHODS = list(default_methods) + env.list('CORS_ALLOW_METHODS', defa
 # JWT Configurations
 
 SIMPLE_JWT = {
-    'AUTH_HEADER_TYPES': ('JWT', 'Bearer'),
+    'AUTH_HEADER_TYPES': ('Bearer',),
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1), # Just for testing purposes, should be 5 minutes in production
     'REFRESH_TOKEN_LIFETIME': timedelta(days=90),
     'UPDATE_LAST_LOGIN': True,
@@ -255,11 +255,22 @@ SIMPLE_JWT = {
     'SIGNING_KEY': SECRET_KEY,
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
+    'JWT_CLAIM': 'jti',
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_OBTAIN_SERIALIZER': 'authentication.serializers.CustomTokenObtainPairSerializer',
-    'TOKEN_REFRESH_SERIALIZER': 'rest_framework_simplejwt.serializers.TokenRefreshSerializer',
+    'TOKEN_OBTAIN_SERIALIZER': 'authentication.serializers.BankTokenObtainPairSerializer',
+    'TOKEN_REFRESH_SERIALIZER': 'authentication.serializers.CookieTokenRefreshSerializer',
 }
+
+JWT_AUTH_ACCESS_COOKIE_NAME = env.str('JWT_AUTH_ACCESS_COOKIE_NAME', default='access_token')
+JWT_AUTH_ACCESS_COOKIE_PATH = env.str('JWT_AUTH_ACCESS_COOKIE_PATH', default='/')
+
+JWT_AUTH_REFRESH_COOKIE_NAME = env.str('JWT_AUTH_REFRESH_COOKIE_NAME', default='refresh_token')
+JWT_AUTH_REFRESH_COOKIE_PATH = env.str('JWT_AUTH_REFRESH_COOKIE_PATH', default='/')
+
+JWT_AUTH_COOKIE_HTTPONLY = env.bool('JWT_AUTH_ACCESS_COOKIE_HTTPONLY', default=True)
+JWT_AUTH_COOKIE_SECURE = env.bool('JWT_AUTH_ACCESS_COOKIE_SECURE', default=False)
+JWT_AUTH_COOKIE_SAMESITE = env.str('JWT_AUTH_ACCESS_COOKIE_SAMESITE', default='Lax')
 
 
 # Email Configurations
