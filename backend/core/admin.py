@@ -3,12 +3,21 @@ from django.conf import settings
 from django.utils import timezone
 
 
-class BankAdmin(admin.ModelAdmin):
+class BaseBankAdmin(admin.ModelAdmin):
     list_display = ['id',]
     ordering = ['-created_at']
     readonly_fields = ['id', 'created_at', 'updated_at', 'deleted_at', 'created_by', 'updated_by', 'deleted_by']
     list_per_page = settings.PAGINATION_ADMIN_PAGE_SIZE
     actions = ['soft_delete_selected',]
+
+    def save_model(self, request, obj, form, change):
+        if not obj.created_at:
+            obj.created_at = timezone.now()
+            obj.created_by_id = request.user.pk
+        else:
+            obj.updated_at = timezone.now()
+            obj.updated_by_id = request.user.pk
+        obj.save()
 
     def soft_delete_selected(self, request, queryset):
         deleted_by = request.user.pk

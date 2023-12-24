@@ -20,13 +20,13 @@ class BaseBankViewSet(viewsets.ModelViewSet):
         return self.model.objects.all()
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user.pk, created_at=timezone.now())
+        serializer.save(created_by=self.request.user, created_at=timezone.now())
     
     def perform_update(self, serializer):
-        serializer.save(updated_by=self.request.user.pk, updated_at=timezone.now())
+        serializer.save(updated_by=self.request.user, updated_at=timezone.now())
     
     def perform_destroy(self, instance):
-        instance.deleted_by = self.request.user.pk
+        instance.deleted_by = self.request.user
         instance.deleted_at = timezone.now()
         instance.save(update_fields=['deleted_by', 'deleted_at'])
 
