@@ -66,6 +66,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt', # JWT
     'django_filters', # Django Filters
     'core.apps.CoreConfig',
+    'banks.apps.BanksConfig',
+    'loans.apps.LoansConfig',
     'authentication.apps.AuthenticationConfig',
 ]
 
@@ -83,6 +85,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.gzip.GZipMiddleware', # GZip Compression
 ]
 
 if DEBUG:
