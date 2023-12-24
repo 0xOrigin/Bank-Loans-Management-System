@@ -2,9 +2,11 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth import get_user_model
 from django.conf import settings
-
+from core.admin import BankAdmin
+from authentication.models import BankPersonnel, LoanProvider, LoanCustomer
 
 User = get_user_model()
+
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
@@ -47,3 +49,22 @@ class UserAdmin(BaseUserAdmin):
         'user_permissions',
     )
     list_per_page = settings.PAGINATION_ADMIN_PAGE_SIZE
+
+
+@admin.register(BankPersonnel)
+class BankPersonnelAdmin(BankAdmin):
+    list_display = BankAdmin.list_display + ['user',]
+    search_fields = ['user__username', 'user__email', 'branch__bank__name_en', 'branch__bank__name_ar']
+    list_filter = ['branch__bank',]
+
+
+@admin.register(LoanProvider)
+class LoanProviderAdmin(BankAdmin):
+    list_display = BankAdmin.list_display + ['user',]
+    search_fields = ['user__username', 'user__email',]
+
+
+@admin.register(LoanCustomer)
+class LoanCustomerAdmin(BankAdmin):
+    list_display = BankAdmin.list_display + ['user',]
+    search_fields = ['user__username', 'user__email',]
