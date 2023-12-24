@@ -31,7 +31,7 @@ class Loan(BaseBankModel):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     plan = models.ForeignKey('loans.LoanPlan', on_delete=models.CASCADE, related_name='loans')
     providers = models.ManyToManyField('authentication.LoanProvider', related_name='loans')
-    customer = models.ForeignKey('authentication.LoanCustomer', on_delete=models.CASCADE)
+    customer = models.ForeignKey('authentication.LoanCustomer', on_delete=models.CASCADE, related_name='loans')
     status = models.CharField(max_length=20, choices=LoanStatus.choices, default=LoanStatus.PENDING.value)
     is_active = models.BooleanField(default=True)
     is_amortized = models.BooleanField(default=False)
