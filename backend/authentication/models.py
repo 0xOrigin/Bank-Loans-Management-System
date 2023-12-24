@@ -66,6 +66,9 @@ class User(AbstractBaseUser, BaseBankModel, PermissionsMixin):
     is_superuser = models.BooleanField(default=False)
     role = models.CharField(max_length=30, choices=UserRole.choices)
 
+    @property
+    def role_object(self):
+        return getattr(self, self.role, None)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email', 'password']
@@ -104,7 +107,6 @@ class LoanProvider(BaseBankModel):
 
 class LoanCustomer(BaseBankModel):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name=UserRole.LOAN_CUSTOMER.value)
-    loans = models.ForeignKey('loans.Loan', on_delete=models.CASCADE, related_name='customers')
     ssn = models.CharField(max_length=20, unique=True) # Social Security Number or National ID
     credit_score = models.PositiveIntegerField()
 

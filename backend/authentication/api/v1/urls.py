@@ -5,13 +5,20 @@ from rest_framework_nested import routers
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.renderers import BrowsableAPIRenderer
 from core.renderers import BankJSONRenderer
-from authentication.views import UserViewSet, LoginView, LogoutView
+from authentication.views import (
+    UserViewSet, LoginView, LogoutView,
+    BankPersonnelViewSet, LoanProviderViewSet, LoanCustomerViewSet
+)
 
 
 TokenRefreshView.renderer_classes = [BankJSONRenderer, BrowsableAPIRenderer]
 
 router = routers.DefaultRouter(trailing_slash=settings.APPEND_SLASH)
 router.register('users', UserViewSet)
+router.register('bank-personnels', BankPersonnelViewSet)
+router.register('loan-providers', LoanProviderViewSet)
+router.register('loan-customers', LoanCustomerViewSet)
+
 
 urlpatterns = [
     path('token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
