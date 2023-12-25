@@ -54,11 +54,11 @@ class User(AbstractBaseUser, BaseBankModel, PermissionsMixin):
         return f'{path}{uuid.uuid4()}{ext}'
 
     username = models.CharField(max_length=30, unique=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(max_length=100)
     first_name = models.CharField(max_length=40, blank=True, null=True)
     last_name = models.CharField(max_length=50, blank=True, null=True)
     picture = models.ImageField(upload_to=get_user_picture_upload_path, blank=True, null=True)
-    phone_number = models.CharField(max_length=20, unique=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
     city = models.CharField(max_length=30, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     is_active = models.BooleanField(default=True)
@@ -86,11 +86,25 @@ class User(AbstractBaseUser, BaseBankModel, PermissionsMixin):
         return self.username
 
 
-class LoanProvider(BaseBankModel):
+class ApplicantStatus(models.TextChoices):
+    PENDING = ('pending', _('Pending'))
+    APPROVED = ('approved', _('Approved'))
+    REJECTED = ('rejected', _('Rejected'))
+
+
+class BaseApplicant(BaseBankModel):
+    status = models.CharField(max_length=20, choices=ApplicantStatus.choices, default=ApplicantStatus.PENDING.value)
+    bank = models.ForeignKey('banks.Bank', on_delete=models.CASCADE, related_name='%(class)s_applicants')
+
+    class Meta:
+        abstract = True
+
+
+class LoanProvider(BaseApplicant):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name=UserRole.LOAN_PROVIDER.value)
     name_en = models.CharField(max_length=150)
     name_ar = models.CharField(max_length=150)
-    total_funds = models.DecimalField(max_digits=16, decimal_places=4)
+    total_funds = models.DecimalField(max_digits=14, decimal_places=2)
     registration_number = models.CharField(max_length=20)
     vat_number = models.CharField(max_length=20)
 
@@ -102,13 +116,14 @@ class LoanProvider(BaseBankModel):
         ]
     
     def __str__(self) -> str:
-        return f'{self.user} ({self.total_budget})'
+        return f'{self.user} ({self.total_funds})'
 
 
-class LoanCustomer(BaseBankModel):
+class LoanCustomer(BaseApplicant):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name=UserRole.LOAN_CUSTOMER.value)
     ssn = models.CharField(max_length=20, unique=True) # Social Security Number or National ID
     credit_score = models.PositiveIntegerField()
+    monthly_income = models.DecimalField(max_digits=14, decimal_places=2)
 
     class Meta:
         managed = True
@@ -124,6 +139,10 @@ class LoanCustomer(BaseBankModel):
 class BankPersonnel(BaseBankModel):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name=UserRole.BANK_PERSONNEL.value)
     branch = models.ForeignKey('banks.Branch', on_delete=models.CASCADE, related_name='personnels')
+
+    @property
+    def bank(self):
+        return self.branch.bank
 
     class Meta:
         managed = True

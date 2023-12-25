@@ -10,6 +10,7 @@ from django.db import transaction
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from core.serializers import BaseBankSerializer
+from core.utils import get_attr_in_lang
 from authentication.models import UserRole, BankPersonnel, LoanProvider, LoanCustomer
 
 User = get_user_model()
@@ -148,20 +149,24 @@ class BankPersonnelSerializer(BaseUserRoleSerializer):
 
 
 class LoanProviderSerializer(BaseUserRoleSerializer):
+    name = serializers.SerializerMethodField(source='get_name')
 
     class Meta:
         model = LoanProvider
-        exclude = BaseBankSerializer.Meta.exclude
+        exclude = BaseBankSerializer.Meta.exclude + ('status',)
 
     def set_user_role(self, data):
         data['role'] = UserRole.LOAN_PROVIDER.value
+    
+    def get_name(self, obj):
+        return get_attr_in_lang(obj, self.context['request'], 'name_ar', 'name_en')
 
 
 class LoanCustomerSerializer(BaseUserRoleSerializer):
 
     class Meta:
         model = LoanCustomer
-        exclude = BaseBankSerializer.Meta.exclude
+        exclude = BaseBankSerializer.Meta.exclude + ('status',)
 
     def set_user_role(self, data):
         data['role'] = UserRole.LOAN_CUSTOMER.value

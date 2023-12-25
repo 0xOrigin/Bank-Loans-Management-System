@@ -14,10 +14,10 @@ from authentication.views import (
 TokenRefreshView.renderer_classes = [BankJSONRenderer, BrowsableAPIRenderer]
 
 router = routers.DefaultRouter(trailing_slash=settings.APPEND_SLASH)
-router.register('users', UserViewSet)
-router.register('bank-personnels', BankPersonnelViewSet)
-router.register('loan-providers', LoanProviderViewSet)
-router.register('loan-customers', LoanCustomerViewSet)
+router.register(r'users', UserViewSet)
+router.register(r'bank-personnels', BankPersonnelViewSet)
+router.register(r'loan-providers', LoanProviderViewSet)
+router.register(r'loan-customers', LoanCustomerViewSet)
 
 
 urlpatterns = [
