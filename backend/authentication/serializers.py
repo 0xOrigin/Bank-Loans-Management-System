@@ -153,12 +153,17 @@ class LoanProviderSerializer(BaseUserRoleSerializer):
 
     class Meta:
         model = LoanProvider
-        exclude = BaseBankSerializer.Meta.exclude + ('status',)
+        exclude = BaseBankSerializer.Meta.exclude
+        extra_kwargs = {
+            'status': {'read_only': True},
+        }
 
     def set_user_role(self, data):
         data['role'] = UserRole.LOAN_PROVIDER.value
     
     def get_name(self, obj):
+        if 'request' not in self.context:
+            return obj.name_en
         return get_attr_in_lang(obj, self.context['request'], 'name_ar', 'name_en')
 
 
@@ -166,7 +171,34 @@ class LoanCustomerSerializer(BaseUserRoleSerializer):
 
     class Meta:
         model = LoanCustomer
-        exclude = BaseBankSerializer.Meta.exclude + ('status',)
+        exclude = BaseBankSerializer.Meta.exclude
+        extra_kwargs = {
+            'status': {'read_only': True},
+        }
 
     def set_user_role(self, data):
         data['role'] = UserRole.LOAN_CUSTOMER.value
+
+
+
+########################### Serializers for Sub-Models ###########################
+
+
+class LoanProviderSubSerializer(BaseBankSerializer):
+    name = serializers.SerializerMethodField(source='get_name')
+
+    class Meta:
+        model = LoanProvider
+        exclude = BaseBankSerializer.Meta.exclude
+
+    def get_name(self, obj):
+        if 'request' not in self.context:
+            return obj.name_en
+        return get_attr_in_lang(obj, self.context['request'], 'name_ar', 'name_en')
+
+
+class LoanCustomerSubSerializer(BaseBankSerializer):
+    
+    class Meta:
+        model = LoanCustomer
+        exclude = BaseBankSerializer.Meta.exclude
