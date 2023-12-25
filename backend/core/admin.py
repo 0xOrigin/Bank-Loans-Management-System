@@ -13,14 +13,14 @@ class BaseBankAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if not obj.created_at:
             obj.created_at = timezone.now()
-            obj.created_by_id = request.user.pk
+            obj.created_by = request.user
         else:
             obj.updated_at = timezone.now()
-            obj.updated_by_id = request.user.pk
+            obj.updated_by = request.user
         obj.save()
 
     def soft_delete_selected(self, request, queryset):
-        deleted_by = request.user.pk
+        deleted_by = request.user
         deleted_at = timezone.now()
         queryset.update(deleted_by=deleted_by, deleted_at=deleted_at)
     
