@@ -21,9 +21,9 @@ class BaseAuditModel(models.Model):
     created_at = models.DateTimeField(verbose_name=_('Created at'))
     updated_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Updated at'))
     deleted_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Deleted at'))
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='%(class)s_created_by', verbose_name=_('Created by'))
-    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='%(class)s_updated_by', verbose_name=_('Updated by'))
-    deleted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='%(class)s_deleted_by', verbose_name=_('Deleted by'))
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='%(class)s_created_by', verbose_name=_('Created by'))
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='%(class)s_updated_by', verbose_name=_('Updated by'))
+    deleted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='%(class)s_deleted_by', verbose_name=_('Deleted by'))
 
     objects = BankManager()
     all_objects = models.Manager()
