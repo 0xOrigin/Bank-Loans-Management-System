@@ -13,7 +13,7 @@ class BankJSONRenderer(JSONRenderer):
 
         response = {
             'status': True,
-            'message': None,
+            'message': data.pop('message', None) if data and isinstance(data, dict) else None,
             'pagination': data.pop('pagination', None) if data and isinstance(data, dict) else None,
             'data': data.get('data', data) if data and isinstance(data, dict) else list(),
             'error': None,
