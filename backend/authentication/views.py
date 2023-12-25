@@ -1,11 +1,13 @@
 from rest_framework import viewsets, status, generics
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from django.utils import timezone
 from core.renderers import BankJSONRenderer
-from core.views import BaseBankViewSet
+from core.views import BaseBankViewSet, NonCreatableViewSet, NonUpdatableViewSet, NonDeletableViewSet
 from authentication.jwt_auth import set_jwt_cookies, unset_jwt_cookies
 from authentication.serializers import UserSerializer, BankPersonnelSerializer, LoanProviderSerializer, LoanCustomerSerializer
 from authentication.permissions import AuthenticationPermissions
@@ -44,7 +46,23 @@ class LogoutView(generics.GenericAPIView):
         return response
 
 
-class BankPersonnelViewSet(BaseBankViewSet):
+class BaseAccountRegistrationViewSet(NonCreatableViewSet, BaseBankViewSet):
+    model = None
+    serializer_class = None
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=None, created_at=timezone.now())
+    
+    @action(detail=False, methods=['post',], url_path='register', url_name='register', permission_classes=[])
+    def register(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class BankPersonnelViewSet(BaseAccountRegistrationViewSet):
     model = BankPersonnel
     queryset = model.objects.all()
     serializer_class = BankPersonnelSerializer
@@ -55,7 +73,7 @@ class BankPersonnelViewSet(BaseBankViewSet):
         )
 
 
-class LoanProviderViewSet(BaseBankViewSet):
+class LoanProviderViewSet(BaseAccountRegistrationViewSet):
     model = LoanProvider
     queryset = model.objects.all()
     serializer_class = LoanProviderSerializer
@@ -66,7 +84,7 @@ class LoanProviderViewSet(BaseBankViewSet):
         )
 
 
-class LoanCustomerViewSet(BaseBankViewSet):
+class LoanCustomerViewSet(BaseAccountRegistrationViewSet):
     model = LoanCustomer
     queryset = model.objects.all()
     serializer_class = LoanCustomerSerializer
