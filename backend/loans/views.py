@@ -32,9 +32,9 @@ class LoanViewSet(NonUpdatableViewSet, NonDeletableViewSet, BaseBankViewSet):
             .filter(bank_id=self.request.user.role_object.bank_id)
             .select_related('plan', 'customer', 'provider')
         )
-        if self.request.user.role == UserRole.LOAN_PROVIDER.value:
+        if self.request.user.role == UserRole.LOAN_PROVIDER.value: # Loan provider can only see loans that they provided
             queryset = queryset.filter(provider=self.request.user.role_object)
-        elif self.request.user.role == UserRole.LOAN_CUSTOMER.value:
+        elif self.request.user.role == UserRole.LOAN_CUSTOMER.value: # Loan customer can only see loans that they applied for
             queryset = queryset.filter(customer=self.request.user.role_object)
         return queryset
 
@@ -43,9 +43,9 @@ class LoanApplicationViewSet(NonCreatableViewSet, LoanViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        if self.request.user.role == UserRole.BANK_PERSONNEL.value:
+        if self.request.user.role == UserRole.BANK_PERSONNEL.value: # Bank personnel can only see loans that are pending approval
             queryset = queryset.filter(status=LoanStatus.PENDING.value)
-        elif self.request.user.role == UserRole.LOAN_PROVIDER.value:
+        elif self.request.user.role == UserRole.LOAN_PROVIDER.value: # Loan provider can only see loans that are approved
             queryset = queryset.filter(status=LoanStatus.APPROVED.value)
         return queryset
 
