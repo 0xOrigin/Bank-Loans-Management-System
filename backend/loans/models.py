@@ -8,11 +8,13 @@ class LoanPlan(BaseBankModel):
     minimum_amount = models.DecimalField(max_digits=10, decimal_places=2)
     maximum_amount = models.DecimalField(max_digits=10, decimal_places=2)
     duration_in_months = models.PositiveIntegerField(verbose_name='Duration in months')
+    bank = models.ForeignKey('banks.Bank', on_delete=models.CASCADE, related_name='loan_plans')
 
     class Meta:
         managed = True
         indexes = [
             models.Index(fields=['id']),
+            models.Index(fields=['bank']),
         ]
 
     def __str__(self) -> str:
@@ -30,8 +32,9 @@ class Loan(BaseBankModel):
     purpose = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     plan = models.ForeignKey('loans.LoanPlan', on_delete=models.CASCADE, related_name='loans')
-    providers = models.ManyToManyField('authentication.LoanProvider', related_name='loans')
+    provider = models.ForeignKey('authentication.LoanProvider', on_delete=models.CASCADE, related_name='loans')
     customer = models.ForeignKey('authentication.LoanCustomer', on_delete=models.CASCADE, related_name='loans')
+    bank = models.ForeignKey('banks.Bank', on_delete=models.CASCADE, related_name='loans')
     status = models.CharField(max_length=20, choices=LoanStatus.choices, default=LoanStatus.PENDING.value)
     is_active = models.BooleanField(default=True)
     is_amortized = models.BooleanField(default=False)
@@ -43,8 +46,11 @@ class Loan(BaseBankModel):
     class Meta:
         managed = True
         indexes = [
+            models.Index(fields=['id']),
             models.Index(fields=['plan']),
             models.Index(fields=['customer']),
+            models.Index(fields=['provider']),
+            models.Index(fields=['bank']),
         ]
 
     def set_monthly_payable_amount(self): # TODO: Move this to a serializer
