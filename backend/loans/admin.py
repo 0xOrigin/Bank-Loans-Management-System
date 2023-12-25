@@ -13,8 +13,8 @@ class LoanPlanAdmin(BaseBankAdmin):
 @admin.register(Loan)
 class LoanAdmin(BaseBankAdmin):
     list_display = BaseBankAdmin.list_display + ['purpose', 'amount', 'plan', 'status', 'is_active', 'is_amortized']
-    search_fields = ['purpose', 'amount', 'plan', 'customer', 'status', 'is_active', 'is_amortized', 'total_payable_amount', 'monthly_payable_amount', 'approved_at', 'released_at']
-    list_filter = ['bank', 'plan', 'status', 'is_active', 'is_amortized', 'approved_at', 'released_at']
+    search_fields = ['purpose', 'amount', 'plan', 'customer', 'status', 'is_active', 'is_amortized', 'total_payable_amount', 'monthly_payable_amount', 'approved_at', 'disbursed_at']
+    list_filter = ['bank', 'plan', 'status', 'is_active', 'is_amortized', 'approved_at', 'disbursed_at']
 
 
 @admin.register(LoanPayment)
