@@ -143,6 +143,10 @@ class BankPersonnel(BaseBankModel):
     @property
     def bank(self):
         return self.branch.bank
+    
+    @property
+    def bank_id(self):
+        return self.branch.bank_id
 
     class Meta:
         managed = True
@@ -150,6 +154,10 @@ class BankPersonnel(BaseBankModel):
             models.Index(fields=['id']),
             models.Index(fields=['user']),
             models.Index(fields=['branch']),
+        ]
+        permissions = [
+            ('can_approve_applicant', 'Can approve applicant'),
+            ('can_reject_applicant', 'Can reject applicant'),
         ]
     
     def __str__(self) -> str:
