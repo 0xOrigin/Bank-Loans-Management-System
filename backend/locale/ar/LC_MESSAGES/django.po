@@ -1,0 +1,199 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-12-26 21:08+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+#: authentication/models.py:16
+msgid "User must have an email address"
+msgstr "يجب ان يكون للمستخدم عنوان بريد الكتروني"
+
+#: authentication/models.py:18
+msgid "User must have a username"
+msgstr "يجب ان يكون للمستخدم اسم مستخدم"
+
+#: authentication/models.py:43
+msgid "Admin"
+msgstr ""
+
+#: authentication/models.py:44
+msgid "Bank Personnel"
+msgstr ""
+
+#: authentication/models.py:45
+msgid "Loan Provider"
+msgstr ""
+
+#: authentication/models.py:46
+msgid "Loan Customer"
+msgstr ""
+
+#: authentication/models.py:90 loans/models.py:25
+msgid "Pending"
+msgstr "معلق"
+
+#: authentication/models.py:91 loans/models.py:26
+msgid "Approved"
+msgstr "مقبول"
+
+#: authentication/models.py:92 loans/models.py:29
+msgid "Rejected"
+msgstr "مرفوض"
+
+#: authentication/serializers.py:61
+msgid "Invalid username or password"
+msgstr "اسم مستخدم او كلمة مرور غير صحيحة"
+
+#: authentication/serializers.py:89
+msgid "No valid refresh token found"
+msgstr ""
+
+#: backend/settings.py:170
+msgid "English"
+msgstr ""
+
+#: backend/settings.py:171
+msgid "Arabic"
+msgstr ""
+
+#: banks/views.py:16
+msgid "ApplicationViewSet must be subclassed with a model"
+msgstr ""
+
+#: banks/views.py:30
+msgid "Application approved"
+msgstr "تم قبول الطلب"
+
+#: banks/views.py:37
+msgid "Application rejected"
+msgstr "تم رفض الطلب"
+
+#: core/models.py:21
+msgid "Created at"
+msgstr "انشئ في"
+
+#: core/models.py:22
+msgid "Updated at"
+msgstr "عدل في"
+
+#: core/models.py:23
+msgid "Deleted at"
+msgstr "حذف في"
+
+#: core/models.py:24
+msgid "Created by"
+msgstr "انشئ بواسطة"
+
+#: core/models.py:25
+msgid "Updated by"
+msgstr "عدل بواسطة"
+
+#: core/models.py:26
+msgid "Deleted by"
+msgstr "حذف بواسطة"
+
+#: core/serializers.py:12 core/serializers.py:17
+msgid "BaseBankSerializer must be subclassed with a model"
+msgstr ""
+
+#: core/views.py:23
+msgid "BaseBankViewSet must be subclassed with a model"
+msgstr ""
+
+#: core/views.py:41 core/views.py:47 core/views.py:50 core/views.py:56
+msgid "Method Not Allowed"
+msgstr "غير مسموح به"
+
+#: loans/models.py:27
+msgid "Released"
+msgstr "حرر"
+
+#: loans/models.py:28
+msgid "Disbursed"
+msgstr "صرف"
+
+#: loans/serializers.py:71
+msgid "Invalid plan"
+msgstr "خطة غير صحيحة"
+
+#: loans/serializers.py:78
+msgid "Amount is not within plan range"
+msgstr "القيمة ليست ضمن النطاق المحدد في الخطة"
+
+#: loans/serializers.py:82
+msgid "Invalid customer"
+msgstr "مستخدم غير صحيح"
+
+#: loans/serializers.py:84
+msgid "Customer is not approved for loan application"
+msgstr "المستخدم غير مقبول للحصول على قرض"
+
+#: loans/serializers.py:89
+msgid "Invalid provider"
+msgstr "مقدم قرض غير صحيح"
+
+#: loans/serializers.py:91
+msgid "Provider is not approved for loan application"
+msgstr "مقدم القرض غير مقبول للاستكمال متطلبات القرض"
+
+#: loans/serializers.py:111
+msgid "Loan Provider does not have enough funds"
+msgstr "مقدم القرض ليس لديه الرصيد الكافي"
+
+#: loans/serializers.py:191
+msgid "Payment already paid"
+msgstr "الدفعة مدفوعة مسبقا"
+
+#: loans/serializers.py:213
+msgid "No updates to perform"
+msgstr "لا يوجد تحديثات للقيام بها"
+
+#: loans/views.py:64 loans/views.py:77
+msgid "Loan is not pending approval"
+msgstr "القرض ليس معلق للموافقة عليه"
+
+#: loans/views.py:71
+msgid "Loan approved"
+msgstr "تم قبول القرض"
+
+#: loans/views.py:84
+msgid "Loan rejected"
+msgstr "تم رفض القرض"
+
+#: loans/views.py:90
+msgid "Loan is not approved"
+msgstr "القرض ليس مقبول"
+
+#: loans/views.py:97
+msgid "Loan released"
+msgstr "حرر القرض"
+
+#: loans/views.py:103
+msgid "Loan is not released"
+msgstr "القرض ليس محرر"
+
+#: loans/views.py:110
+msgid "Loan disbursed"
+msgstr "صرف القرض"
+
+#: loans/views.py:149
+msgid "No more payments to be made"
+msgstr "لا يوجد مدفوعات اخرى للقيام بها"
+
+#: loans/views.py:161
+msgid "Loan payment successful"
+msgstr "تم الدفع بنجاح"
