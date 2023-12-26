@@ -14,11 +14,11 @@
 5. Running the Application:
     * To start the application, run: ```sudo docker-compose up -d```
 
-## Accessing the Application:
+## Accessing the Application
 
 - The application should now be accessible through your web browser at the specified URL (often http://localhost/ or similar).
 
-## Additional Information:
+## Additional Information
   * API Reference: [Postman Collection](https://documenter.getpostman.com/view/24525817/2s9Ykt5z8g)
   * Project Assumptions & Notes: [Project Assumptions](https://docs.google.com/document/d/1Me3naeS0EhTmYs2OVNU2oae2lk3hQ36q4poK2Magvfo/edit?usp=sharing)
   * .env file example: [.env file](https://drive.google.com/file/d/1toKV0EhxJFO2sujH5anqTkA9RwsBtPxs/view?usp=sharing)
