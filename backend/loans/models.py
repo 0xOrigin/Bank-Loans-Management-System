@@ -79,6 +79,10 @@ class LoanPayment(BaseBankModel): # AKA Installment, or Amortization
             models.Index(fields=['installment_number']),
             models.Index(fields=['loan']),
         ]
+        permissions = [
+            ('can_pay_loan', 'Can pay loan'),
+            ('can_view_amortization_schedule', 'Can view amortization schedule'),
+        ]
 
     def __str__(self) -> str:
         return f'{self.loan} ({self.amount})'
