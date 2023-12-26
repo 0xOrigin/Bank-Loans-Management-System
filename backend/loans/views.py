@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from core.views import BaseBankViewSet, NonCreatableViewSet, NonUpdatableViewSet, NonDeletableViewSet
 from authentication.models import UserRole
@@ -52,25 +53,34 @@ class LoanApplicationViewSet(NonCreatableViewSet, LoanViewSet):
     @action(detail=True, methods=['get',], url_path='approve', url_name='approve', permission_classes=[ApproveLoanPermissions])
     def approve(self, request, pk=None):
         instance = self.get_object()
-        instance.status = LoanStatus.APPROVED.value
-        instance.save(update_fields=['status'])
+        serializer = self.get_serializer(instance, data={}, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(
+            updated_by=self.request.user, updated_at=timezone.now(),
+            approved_at=timezone.now(), status=LoanStatus.APPROVED.value
+        )
         return Response({'message': _('Loan approved')}, status=status.HTTP_200_OK)
     
     @action(detail=True, methods=['get',], url_path='reject', url_name='reject', permission_classes=[RejectLoanPermissions])
     def reject(self, request, pk=None):
         instance = self.get_object()
-        instance.status = LoanStatus.REJECTED.value
-        instance.save(update_fields=['status'])
+        serializer = self.get_serializer(instance, data={}, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(
+            updated_by=self.request.user, updated_at=timezone.now(),
+            status=LoanStatus.REJECTED.value
+        )
         return Response({'message': _('Loan rejected')}, status=status.HTTP_200_OK)
     
     @action(detail=True, methods=['get',], url_path='disburse', url_name='disburse', permission_classes=[DisburseLoanPermissions])
     def disburse(self, request, pk=None):
         instance = self.get_object()
-        instance.status = LoanStatus.DISBURSED.value
-        instance.save(update_fields=['status'])
-        # TODO: Deduct loan amount from provider's account
-        # TODO: Add the deducted amount total funds of the bank
-        # TODO: Generate loan payment schedule
+        serializer = self.get_serializer(instance, data={}, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(
+            updated_by=self.request.user, updated_at=timezone.now(),
+            disbursed_at=timezone.now(), status=LoanStatus.DISBURSED.value
+        )
         return Response({'message': _('Loan disbursed')}, status=status.HTTP_200_OK)
 
 
