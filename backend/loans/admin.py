@@ -19,6 +19,6 @@ class LoanAdmin(BaseBankAdmin):
 
 @admin.register(LoanPayment)
 class LoanPaymentAdmin(BaseBankAdmin):
-    list_display = BaseBankAdmin.list_display
+    list_display = BaseBankAdmin.list_display + ['installment_number', 'loan', 'amount', 'interest_paid', 'principal_paid', 'remaining_principal', 'is_paid']
     search_fields = ['installment_number', 'loan', 'amount',]
     list_filter = ['is_paid',]
