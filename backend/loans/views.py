@@ -5,9 +5,13 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from core.views import BaseBankViewSet, NonCreatableViewSet, NonUpdatableViewSet, NonDeletableViewSet
 from authentication.models import UserRole
-from loans.serializers import LoanPlanSerializer, LoanSerializer, LoanPaymentSerializer
+from loans.serializers import LoanPlanSerializer, LoanSerializer, LoanPaymentSerializer, AmortizationScheduleSerializer
 from loans.models import LoanPlan, Loan, LoanPayment, LoanStatus
-from loans.permissions import ApproveLoanPermissions, RejectLoanPermissions, DisburseLoanPermissions
+from loans.filters import LoanPaymentFilter
+from loans.permissions import (
+    ApproveLoanPermissions, RejectLoanPermissions, DisburseLoanPermissions,
+    PayLoanPermissions, AmortizationSchedulePermissions
+)
 
 
 class LoanPlanViewSet(NonUpdatableViewSet, NonDeletableViewSet, BaseBankViewSet):
@@ -84,7 +88,52 @@ class LoanApplicationViewSet(NonCreatableViewSet, LoanViewSet):
         return Response({'message': _('Loan disbursed')}, status=status.HTTP_200_OK)
 
 
-class LoanPaymentViewSet(NonUpdatableViewSet, NonDeletableViewSet, BaseBankViewSet):
+class AmortizationScheduleViewSet(NonCreatableViewSet, NonUpdatableViewSet, NonDeletableViewSet, BaseBankViewSet):
     model = LoanPayment
     queryset = model.objects.all()
+    permission_classes = [AmortizationSchedulePermissions]
+    serializer_class = AmortizationScheduleSerializer
+    filterset_class = LoanPaymentFilter
+
+    def get_queryset(self):
+        return (
+            super().get_queryset()
+            .filter(loan_id=self.kwargs['loan_pk'])
+        )
+
+
+class LoanPaymentViewSet(NonCreatableViewSet, NonUpdatableViewSet, NonDeletableViewSet, BaseBankViewSet):
+    model = LoanPayment
+    queryset = model.objects.all()
+    permission_classes = [PayLoanPermissions]
     serializer_class = LoanPaymentSerializer
+
+    def get_queryset(self):
+        return (
+            super().get_queryset()
+            .filter(loan_id=self.kwargs['loan_pk'])
+        )
+
+    @action(detail=False, methods=['get',], url_path='next-payment', url_name='next-payment')
+    def next_payment(self, request, loan_pk=None):
+        instance = (
+            self.get_queryset()
+            .filter(is_paid=False, paid_at__isnull=True)
+            .order_by('installment_number')
+            .first()
+        )
+        serializer = self.get_serializer(instance)
+        if instance is None:
+            return Response({'message': _('No more payments to be made')}, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get',], url_path='pay', url_name='pay')
+    def pay(self, request, loan_pk=None, pk=None):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data={}, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(
+            updated_by=self.request.user, updated_at=timezone.now(),
+            is_paid=True, paid_at=timezone.now()
+        )
+        return Response({'message': _('Loan payment successful')}, status=status.HTTP_200_OK)

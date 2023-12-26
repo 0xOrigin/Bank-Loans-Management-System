@@ -3,11 +3,12 @@ from rest_framework.settings import api_settings
 from decimal import Decimal
 from django.db import transaction
 from django.db.models import F
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from core.serializers import BaseBankSerializer
-from authentication.models import ApplicantStatus, LoanProvider
-from banks.models import Bank
 from authentication.serializers import LoanProviderSubSerializer, LoanCustomerSubSerializer
+from authentication.models import ApplicantStatus, UserRole, LoanProvider
+from banks.models import Bank
 from loans.models import LoanStatus, LoanPlan, Loan, LoanPayment
 
 
@@ -44,15 +45,20 @@ class LoanSerializer(BaseBankSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['plan'] = LoanPlanSerializer(instance.plan, context=self.context).data
-        data['customer'] = LoanCustomerSubSerializer(instance.customer, context=self.context).data
-        data['provider'] = LoanProviderSubSerializer(instance.provider, context=self.context).data
+        if self.context['request'].user.role == UserRole.LOAN_PROVIDER.value:
+            data['customer'] = LoanCustomerSubSerializer(instance.customer, context=self.context).data
+        elif self.context['request'].user.role == UserRole.LOAN_CUSTOMER.value:
+            data['provider'] = LoanProviderSubSerializer(instance.provider, context=self.context).data
         return data
+
+    def calculate_monthly_interest_rate(self, annual_interest_rate):
+        return Decimal(annual_interest_rate / Decimal(100) / Decimal(12))
 
     def calculate_monthly_payable_amount(self, validated_data):
         # Monthly Payment = Principal * Monthly Interest Rate * ((1 + Monthly Interest Rate) ^ Loan Duration in Months) 
         #                   / 
         #                   (((1 + Monthly Interest Rate) ^ Loan Duration in Months) - 1)
-        monthly_interest_rate = validated_data['plan'].annual_interest_rate / Decimal(100) / Decimal(12)
+        monthly_interest_rate = self.calculate_monthly_interest_rate(validated_data['plan'].annual_interest_rate)
         first_part_of_equation = validated_data['amount'] * monthly_interest_rate * ((1 + monthly_interest_rate) ** validated_data['plan'].duration_in_months)
         second_part_of_equation = (((1 + monthly_interest_rate) ** validated_data['plan'].duration_in_months) - 1)
         return first_part_of_equation / second_part_of_equation
@@ -110,11 +116,41 @@ class LoanSerializer(BaseBankSerializer):
     def deposit_loan_amount_to_bank(self, instance):
         with transaction.atomic():
             # Deduct loan amount from provider's account
-            instance.provider.total_funds = F('total_funds') - instance.amount
-            instance.provider.save(update_fields=['total_funds'])
-            # Add the deducted amount total funds of the bank
-            instance.bank.total_funds = F('total_funds') + instance.amount
-            instance.bank.save(update_fields=['total_funds'])
+            LoanProvider.objects.filter(pk=instance.provider_id).update(
+                total_funds=F('total_funds') - instance.amount
+            )
+            # Add the deducted amount to the bank
+            Bank.objects.filter(pk=instance.bank_id).update(
+                available_funds=F('available_funds') + instance.amount,
+                total_funds=F('total_funds') + instance.amount
+            )
+
+    def disburse_loan(self, instance):
+        with transaction.atomic():
+            Bank.objects.filter(pk=instance.bank_id).update(
+                available_funds=F('available_funds') - instance.amount,
+                total_loans=F('total_loans') + instance.amount
+            )
+
+    def generate_payment_schedule(self, instance):
+        payment_schedules = []
+        remaining_principal = instance.amount
+        monthly_interest_rate = self.calculate_monthly_interest_rate(instance.plan.annual_interest_rate)
+        
+        for month in range(1, instance.plan.duration_in_months + 1):
+            interest_paid = remaining_principal * monthly_interest_rate
+            principal_paid = instance.monthly_payable_amount - interest_paid
+            remaining_principal = Decimal(remaining_principal - principal_paid) if remaining_principal > principal_paid else Decimal(0)
+            payment_schedule = LoanPayment(
+                created_by=self.context['request'].user, created_at=timezone.now(),
+                installment_number=month, loan=instance, amount=instance.monthly_payable_amount,
+                due_date=(instance.approved_at + timezone.timedelta(days=30 * month)),
+                interest_paid=interest_paid, principal_paid=principal_paid, remaining_principal=remaining_principal
+            )
+            payment_schedules.append(payment_schedule)
+        
+        with transaction.atomic():
+            LoanPayment.objects.bulk_create(payment_schedules)
 
     def update(self, instance, validated_data):
         with transaction.atomic():
@@ -124,13 +160,59 @@ class LoanSerializer(BaseBankSerializer):
             
             self.validate_disbursibility(instance)
             self.deposit_loan_amount_to_bank(instance)
-            # TODO: Generate loan payment schedule
+            self.disburse_loan(instance)
+            self.generate_payment_schedule(instance)
         
         return instance
+
+
+class AmortizationScheduleSerializer(BaseBankSerializer):
+    
+    class Meta:
+        model = LoanPayment
+        exclude = BaseBankSerializer.Meta.exclude + ('loan',)
 
 
 class LoanPaymentSerializer(BaseBankSerializer):
 
     class Meta:
         model = LoanPayment
-        exclude = BaseBankSerializer.Meta.exclude
+        exclude = BaseBankSerializer.Meta.exclude + (
+            'loan', 'interest_paid', 'principal_paid', 'remaining_principal',
+            'is_paid', 'paid_at',
+        )
+
+    def is_paid(self, validated_data, instance):
+        if instance.is_paid:
+            raise serializers.ValidationError({api_settings.NON_FIELD_ERRORS_KEY: [_('Payment already paid')]})
+        return (
+            'is_paid' in validated_data and validated_data['is_paid']
+            and 'paid_at' in validated_data and validated_data['paid_at']
+        )
+
+    def update_bank_funds(self, instance):
+        with transaction.atomic():
+            Bank.objects.filter(pk=instance.loan.bank_id).update(
+                total_loans=F('total_loans') - instance.principal_paid,
+                available_funds=F('available_funds') + instance.amount,
+                total_funds=F('total_funds') + instance.interest_paid
+            )
+
+    def is_last_payment(self, instance):
+        return (
+            instance.installment_number == instance.loan.plan.duration_in_months
+            and instance.remaining_principal == Decimal(0)
+        )
+
+    def update(self, instance, validated_data):
+        with transaction.atomic():
+            if not self.is_paid(validated_data, instance):
+                raise serializers.ValidationError({api_settings.NON_FIELD_ERRORS_KEY: [_('No updates to perform')]})
+            instance = super().update(instance, validated_data)
+            self.update_bank_funds(instance)
+            if self.is_last_payment(instance):
+                instance.loan.is_active = False
+                instance.loan.is_amortized = True
+                instance.loan.save(update_fields=['is_active', 'is_amortized'])
+        
+        return instance
