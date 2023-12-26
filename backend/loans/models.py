@@ -55,8 +55,9 @@ class Loan(BaseBankModel):
         ]
         permissions = [
             ('can_approve_loan', 'Can approve loan'),
-            ('can_reject_loan', 'Can reject loan'),
+            ('can_release_loan', 'Can release loan'),
             ('can_disburse_loan', 'Can disburse loan'),
+            ('can_reject_loan', 'Can reject loan'),
         ]
 
     def __str__(self) -> str:
