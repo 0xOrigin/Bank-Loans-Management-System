@@ -24,6 +24,7 @@ class LoanPlan(BaseBankModel):
 class LoanStatus(models.TextChoices):
     PENDING = ('pending', _('Pending'))
     APPROVED = ('approved', _('Approved'))
+    RELEASED = ('released', _('Released'))
     DISBURSED = ('disbursed', _('Disbursed'))
     REJECTED = ('rejected', _('Rejected'))
 
