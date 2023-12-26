@@ -1,15 +1,17 @@
 from rest_framework import viewsets, status, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from core.views import BaseBankViewSet, NonCreatableViewSet, NonUpdatableViewSet, NonDeletableViewSet
 from authentication.models import UserRole
 from loans.serializers import LoanPlanSerializer, LoanSerializer, LoanPaymentSerializer, AmortizationScheduleSerializer
 from loans.models import LoanPlan, Loan, LoanPayment, LoanStatus
-from loans.filters import LoanPaymentFilter
+from loans.filters import LoanFilter, LoanPaymentFilter
 from loans.permissions import (
-    ApproveLoanPermissions, RejectLoanPermissions, DisburseLoanPermissions,
+    ApproveLoanPermissions, RejectLoanPermissions,
+    ReleaseLoanPermissions, DisburseLoanPermissions,
     PayLoanPermissions, AmortizationSchedulePermissions
 )
 
@@ -45,11 +47,12 @@ class LoanViewSet(NonUpdatableViewSet, NonDeletableViewSet, BaseBankViewSet):
 
 
 class LoanApplicationViewSet(NonCreatableViewSet, LoanViewSet):
+    filterset_class = LoanFilter
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        if self.request.user.role == UserRole.BANK_PERSONNEL.value: # Bank personnel can only see loans that are pending approval
-            queryset = queryset.filter(status=LoanStatus.PENDING.value)
+        if self.request.user.role == UserRole.BANK_PERSONNEL.value: # Bank personnel can only see loans that are pending approval or released
+            queryset = queryset.filter(Q(status=LoanStatus.PENDING.value) | Q(status=LoanStatus.RELEASED.value))
         elif self.request.user.role == UserRole.LOAN_PROVIDER.value: # Loan provider can only see loans that are approved
             queryset = queryset.filter(status=LoanStatus.APPROVED.value)
         return queryset
@@ -57,6 +60,8 @@ class LoanApplicationViewSet(NonCreatableViewSet, LoanViewSet):
     @action(detail=True, methods=['get',], url_path='approve', url_name='approve', permission_classes=[ApproveLoanPermissions])
     def approve(self, request, pk=None):
         instance = self.get_object()
+        if instance.status != LoanStatus.PENDING.value:
+            return Response({'detail': _('Loan is not pending approval')}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(instance, data={}, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save(
@@ -68,17 +73,34 @@ class LoanApplicationViewSet(NonCreatableViewSet, LoanViewSet):
     @action(detail=True, methods=['get',], url_path='reject', url_name='reject', permission_classes=[RejectLoanPermissions])
     def reject(self, request, pk=None):
         instance = self.get_object()
+        if instance.status != LoanStatus.PENDING.value:
+            return Response({'detail': _('Loan is not pending approval')}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(instance, data={}, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save(
             updated_by=self.request.user, updated_at=timezone.now(),
-            status=LoanStatus.REJECTED.value
+            rejected_at=timezone.now(), status=LoanStatus.REJECTED.value
         )
         return Response({'message': _('Loan rejected')}, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['get',], url_path='release', url_name='release', permission_classes=[ReleaseLoanPermissions])
+    def release(self, request, pk=None):
+        instance = self.get_object()
+        if instance.status != LoanStatus.APPROVED.value:
+            return Response({'detail': _('Loan is not approved')}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(instance, data={}, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(
+            updated_by=self.request.user, updated_at=timezone.now(),
+            released_at=timezone.now(), status=LoanStatus.RELEASED.value
+        )
+        return Response({'message': _('Loan released')}, status=status.HTTP_200_OK)
     
     @action(detail=True, methods=['get',], url_path='disburse', url_name='disburse', permission_classes=[DisburseLoanPermissions])
     def disburse(self, request, pk=None):
         instance = self.get_object()
+        if instance.status != LoanStatus.RELEASED.value:
+            return Response({'detail': _('Loan is not released')}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(instance, data={}, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save(

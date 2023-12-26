@@ -45,9 +45,9 @@ class LoanSerializer(BaseBankSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['plan'] = LoanPlanSerializer(instance.plan, context=self.context).data
-        if self.context['request'].user.role == UserRole.LOAN_PROVIDER.value:
+        if self.context['request'].user.role in [UserRole.LOAN_PROVIDER.value, UserRole.BANK_PERSONNEL.value]:
             data['customer'] = LoanCustomerSubSerializer(instance.customer, context=self.context).data
-        elif self.context['request'].user.role == UserRole.LOAN_CUSTOMER.value:
+        if self.context['request'].user.role in [UserRole.LOAN_CUSTOMER.value, UserRole.BANK_PERSONNEL.value]:
             data['provider'] = LoanProviderSubSerializer(instance.provider, context=self.context).data
         return data
 
@@ -105,10 +105,13 @@ class LoanSerializer(BaseBankSerializer):
 
         return instance
     
-    def validate_disbursibility(self, instance):
+    def validate_releasability(self, instance):
         provider_total_funds = LoanProvider.objects.filter(pk=instance.provider_id).values_list('total_funds', flat=True).first()
         if instance.amount > provider_total_funds:
             raise serializers.ValidationError({api_settings.NON_FIELD_ERRORS_KEY: [_('Loan Provider does not have enough funds')]})
+
+    def is_released(self, validated_data):
+        return 'status' in validated_data and validated_data['status'] == LoanStatus.RELEASED.value
 
     def is_disbursed(self, validated_data):
         return 'status' in validated_data and validated_data['status'] == LoanStatus.DISBURSED.value
@@ -155,13 +158,14 @@ class LoanSerializer(BaseBankSerializer):
     def update(self, instance, validated_data):
         with transaction.atomic():
             instance = super().update(instance, validated_data)
-            if not self.is_disbursed(validated_data):
-                return instance
+
+            if self.is_released(validated_data):
+                self.validate_releasability(instance)
+                self.deposit_loan_amount_to_bank(instance)
             
-            self.validate_disbursibility(instance)
-            self.deposit_loan_amount_to_bank(instance)
-            self.disburse_loan(instance)
-            self.generate_payment_schedule(instance)
+            if self.is_disbursed(validated_data):
+                self.disburse_loan(instance)
+                self.generate_payment_schedule(instance)
         
         return instance
 
@@ -201,7 +205,6 @@ class LoanPaymentSerializer(BaseBankSerializer):
     def is_last_payment(self, instance):
         return (
             instance.installment_number == instance.loan.plan.duration_in_months
-            and instance.remaining_principal == Decimal(0)
         )
 
     def update(self, instance, validated_data):
