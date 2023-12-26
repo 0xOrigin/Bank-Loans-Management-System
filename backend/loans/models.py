@@ -42,7 +42,9 @@ class Loan(BaseBankModel):
     total_payable_amount = models.DecimalField(max_digits=16, decimal_places=2)
     monthly_payable_amount = models.DecimalField(max_digits=12, decimal_places=2)
     approved_at = models.DateTimeField(null=True, blank=True)
+    released_at = models.DateTimeField(null=True, blank=True)
     disbursed_at = models.DateTimeField(null=True, blank=True)
+    rejected_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         managed = True
