@@ -15,6 +15,18 @@ class RejectLoanPermissions(BaseBankPermissions):
 
 
 class DisburseLoanPermissions(BaseBankPermissions):
-        
+    
     def has_permission(self, request, view):
         return super().has_permission(request, view) and request.user.has_perm(f'{LoansConfig.name}.can_disburse_loan')
+
+
+class PayLoanPermissions(BaseBankPermissions):
+    
+    def has_permission(self, request, view):
+        return super().has_permission(request, view) and request.user.has_perm(f'{LoansConfig.name}.can_pay_loan')
+
+
+class AmortizationSchedulePermissions(BaseBankPermissions):
+    
+    def has_permission(self, request, view):
+        return super().has_permission(request, view) and request.user.has_perm(f'{LoansConfig.name}.can_view_amortization_schedule')
