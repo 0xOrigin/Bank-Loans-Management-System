@@ -5,8 +5,9 @@ from core.models import BaseBankModel
 class Bank(BaseBankModel):
     name_en = models.CharField(max_length=150)
     name_ar = models.CharField(max_length=150)
-    total_funds = models.DecimalField(max_digits=14, decimal_places=2, default=0)
-    available_funds = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    total_funds = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    available_funds = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    total_loans = models.DecimalField(max_digits=18, decimal_places=2, default=0)
 
     class Meta:
         managed = True
