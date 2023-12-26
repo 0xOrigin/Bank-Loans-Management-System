@@ -10,6 +10,7 @@ from core.permissions import BaseBankPermissions
 from core.renderers import BankJSONRenderer
 
 
+# TODO: Implement rate limiting for all views (Must be concurrency safe)
 class BaseBankViewSet(viewsets.ModelViewSet):
     model = None
     filter_backends = [DjangoFilterBackend, OrderingFilter]
