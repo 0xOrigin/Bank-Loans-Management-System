@@ -34,7 +34,7 @@ class LoanPlanSerializer(BaseBankSerializer):
         return value
 
     def validate_annual_interest_rate(self, value):
-        if value <= 0:
+        if value <= Decimal(0):
             raise serializers.ValidationError(_('Annual interest rate must be greater than 0'))
         return value
 
