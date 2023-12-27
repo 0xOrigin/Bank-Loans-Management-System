@@ -18,6 +18,32 @@ class LoanPlanSerializer(BaseBankSerializer):
         model = LoanPlan
         exclude = BaseBankSerializer.Meta.exclude + ('bank',)
     
+    def validate_minimum_amount(self, value):
+        if value <= Decimal(0):
+            raise serializers.ValidationError(_('Minimum amount must be greater than 0'))
+        return value
+    
+    def validate_maximum_amount(self, value):
+        if value <= Decimal(0):
+            raise serializers.ValidationError(_('Maximum amount must be greater than 0'))
+        return value
+
+    def validate_duration_in_months(self, value):
+        if value <= 0:
+            raise serializers.ValidationError(_('Duration must be greater than 0'))
+        return value
+
+    def validate_annual_interest_rate(self, value):
+        if value <= 0:
+            raise serializers.ValidationError(_('Annual interest rate must be greater than 0'))
+        return value
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if attrs['minimum_amount'] > attrs['maximum_amount']:
+            raise serializers.ValidationError(_('Minimum amount must be less than maximum amount'))
+        return attrs
+
     def create(self, validated_data):
         validated_data['bank'] = self.context['request'].user.role_object.bank
         return super().create(validated_data)
